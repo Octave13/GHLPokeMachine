@@ -156,14 +156,22 @@ HCURSOR CGHLPokeMachineDlg::OnQueryDragIcon()
 }
 
 
+BOOL FailureDeviceNotFound;
+DWORD   dwThreadIdArray[4];
+HANDLE  hThreadArray[4];
+PDEVICE_DATA pDeviceData[4];
+
+
 void CGHLPokeMachineDlg::OnBnClickedStart()
 {
 	// TODO: ajoutez ici le code de votre gestionnaire de notification de contrôle
+	StartGHPoke(&FailureDeviceNotFound, dwThreadIdArray, hThreadArray, pDeviceData);
 }
 
 
 void CGHLPokeMachineDlg::OnBnClickedCancel()
 {
+	StopGHPoke(hThreadArray, pDeviceData);
 	// TODO: ajoutez ici le code de votre gestionnaire de notification de contrôle
 	CDialogEx::OnCancel();
 }

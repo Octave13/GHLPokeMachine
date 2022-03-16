@@ -96,6 +96,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>%(AdditionalDependencies);onecoreuap.lib;winusb.lib</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -186,6 +187,7 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="GHLPokeMachine.h" />
     <ClInclude Include="GHLPokeMachineDlg.h" />
+    <ClInclude Include="GHL_Library\GHLPoke.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
@@ -193,6 +195,7 @@
   <ItemGroup>
     <ClCompile Include="GHLPokeMachine.cpp" />
     <ClCompile Include="GHLPokeMachineDlg.cpp" />
+    <ClCompile Include="GHL_Library\GHLPoke.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

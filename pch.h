@@ -10,4 +10,20 @@
 // ajouter les en-têtes à précompiler ici
 #include "framework.h"
 
+
+#include <initguid.h>
+#include <cfgmgr32.h>
+#include <setupapi.h>
+#include <winioctl.h>
+#include <hidsdi.h>
+#include <hidpi.h>
+#include <Windows.h>
+#include <tchar.h>
+#include <strsafe.h>
+#include <winusb.h>
+#include <usb.h>
+
+#include "GHL_Library/GHLPoke.h"
+
+
 #endif //PCH_H
