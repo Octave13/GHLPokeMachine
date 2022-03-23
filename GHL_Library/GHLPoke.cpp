@@ -5,12 +5,12 @@
 
 
 BOOL Continue = TRUE;
-
 int j = 0;
+const CHAR Ps3WiiuPokeMessage[POKE_MESSAGE_LENGTH] = PS3_WIIU_POKE_MESSAGE;
+const CHAR Ps4PokeMessage[POKE_MESSAGE_LENGTH] = PS4_POKE_MESSAGE;
 
-DWORD WINAPI PS4Poke(LPVOID lpParam);
-
-DWORD WINAPI PS3WiiUPoke(LPVOID lpParam);
+DeviceType CheckVidPid(WCHAR* DevicePath);
+DWORD WINAPI SendPokeMessage(LPVOID lpParam);
 
 HRESULT StartGHPoke(_Out_opt_ PBOOL  FailureDeviceNotFound, DWORD   dwThreadIdArray[], HANDLE  hThreadArray[], PDEVICE_DATA pDeviceData[])
 {
@@ -22,6 +22,7 @@ HRESULT StartGHPoke(_Out_opt_ PBOOL  FailureDeviceNotFound, DWORD   dwThreadIdAr
     ULONG                            length;
     ULONG                            requiredLength = 0;
     HRESULT                          hr = NO_ERROR;
+    DeviceType                       Device = UNKNOWN_DEVICE;
     int i = 0;
     if (NULL != FailureDeviceNotFound) {
 
@@ -109,41 +110,9 @@ HRESULT StartGHPoke(_Out_opt_ PBOOL  FailureDeviceNotFound, DWORD   dwThreadIdAr
             return hr;
         }
 
-        /* PS3 & WIIU*/
-        if (wcsstr(detailData->DevicePath, PS3_WIIU_VID_PID))
+        if (Device = CheckVidPid(detailData->DevicePath))
         {
-            pDeviceData[j] = (PDEVICE_DATA)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DEVICE_DATA));
-            if (pDeviceData == NULL)
-            {
-                hr = HRESULT_FROM_WIN32(GetLastError());
-                LocalFree(detailData);
-                SetupDiDestroyDeviceInfoList(deviceInfo);
-                return hr;
-            }
-
-            StringCbCopy(pDeviceData[j]->DevicePath, MAX_PATH - 1, detailData->DevicePath);
-
-            hThreadArray[j] = CreateThread(
-                NULL,                   // default security attributes
-                0,                      // use default stack size  
-                PS3WiiUPoke,       // thread function name
-                pDeviceData[j], // argument to thread function 
-                0,                      // use default creation flags 
-                &dwThreadIdArray[j]);   // returns the thread identifier 
-
-            if (hThreadArray[j] == NULL)
-            {
-                LocalFree(detailData);
-                SetupDiDestroyDeviceInfoList(deviceInfo);
-                ExitProcess(3);
-            }
-
-            j++;
-
-        }
-        /* PS4*/
-        else if (wcsstr(detailData->DevicePath, PS4_VID_PID))
-        {
+            /* Memory Allocation for Data */
             pDeviceData[j] = (PDEVICE_DATA)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DEVICE_DATA));
             if(pDeviceData == NULL)
             {
@@ -152,12 +121,16 @@ HRESULT StartGHPoke(_Out_opt_ PBOOL  FailureDeviceNotFound, DWORD   dwThreadIdAr
                 SetupDiDestroyDeviceInfoList(deviceInfo);
                 return hr;
             }
+
+            /* Copy Device Path in device Data */
             StringCbCopy(pDeviceData[j]->DevicePath, MAX_PATH - 1, detailData->DevicePath);
+
+            memcpy_s(pDeviceData[j]->PokeMessage, POKE_MESSAGE_LENGTH, Ps4PokeMessage, POKE_MESSAGE_LENGTH);
 
             hThreadArray[j] = CreateThread(
                 NULL,                   // default security attributes
                 0,                      // use default stack size  
-                PS4Poke,       // thread function name
+                SendPokeMessage,       // thread function name
                 pDeviceData[j], // argument to thread function 
                 0,                      // use default creation flags 
                 &dwThreadIdArray[j]);   // returns the thread identifier 
@@ -186,50 +159,22 @@ HRESULT StartGHPoke(_Out_opt_ PBOOL  FailureDeviceNotFound, DWORD   dwThreadIdAr
     return hr;
 }
 
-
-#define BUFSIZE 9
-
-DWORD WINAPI PS3WiiUPoke(LPVOID lpParam)
+DeviceType CheckVidPid(WCHAR *DevicePath)
 {
-    HRESULT hr = S_OK;
-    PDEVICE_DATA DeviceData = (PDEVICE_DATA)lpParam;
-    BOOL    bResult;
-    CHAR Buffer[BUFSIZE] = PS3_WIIU_POKE_MESSAGE;
-
-    DeviceData->DeviceHandle = CreateFile(DeviceData->DevicePath, GENERIC_WRITE | GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
-
-    if (INVALID_HANDLE_VALUE == DeviceData->DeviceHandle)
-    {
-        hr = HRESULT_FROM_WIN32(GetLastError());
-        return hr;
-    }
-
-    while (Continue)
-    {
-        bResult = HidD_SetOutputReport(DeviceData->DeviceHandle, Buffer, BUFSIZE * sizeof(CHAR));
-        if (!bResult)
-        {
-            hr = HRESULT_FROM_WIN32(GetLastError());
-            CloseHandle(DeviceData->DeviceHandle);
-            return hr;
-        }
-        Sleep(6000);
-    }
-
-    WinUsb_Free(DeviceData->WinusbHandle);
-    CloseHandle(DeviceData->DeviceHandle);
-    DeviceData->HandlesOpen = FALSE;
-
-    return hr;
+    if (wcsstr(DevicePath, PS4_VID_PID))
+        return PS4;
+    else if(wcsstr(DevicePath, PS3_WIIU_VID_PID))
+        return PS3_WIIU;
+    else
+        /* Not a recognize Device*/
+        return UNKNOWN_DEVICE;
 }
 
-
-DWORD WINAPI PS4Poke(LPVOID lpParam)
+DWORD WINAPI SendPokeMessage(LPVOID lpParam)
 {
     HRESULT hr = S_OK;
     PDEVICE_DATA DeviceData = (PDEVICE_DATA)lpParam;
     BOOL    bResult;
-    CHAR Buffer[POKE_MESSAGE_LENGTH] = PS4_POKE_MESSAGE;
 
     DeviceData->DeviceHandle = CreateFile(DeviceData->DevicePath, GENERIC_WRITE | GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
 
@@ -241,14 +186,19 @@ DWORD WINAPI PS4Poke(LPVOID lpParam)
 
     while (Continue)
     {
-        bResult = HidD_SetOutputReport(DeviceData->DeviceHandle, Buffer, POKE_MESSAGE_LENGTH * sizeof(CHAR));
+        /* Send Poke */
+        bResult = HidD_SetOutputReport(DeviceData->DeviceHandle, DeviceData->PokeMessage, POKE_MESSAGE_LENGTH * sizeof(CHAR));
         if (!bResult)
         {
+            /* If error eg: Deconnexion */
             hr = HRESULT_FROM_WIN32(GetLastError());
+            WinUsb_Free(DeviceData->WinusbHandle);
             CloseHandle(DeviceData->DeviceHandle);
+            DeviceData->HandlesOpen = FALSE;
             return hr;
         }
-        Sleep(6000);
+        /* Wait for next poke */
+        Sleep(DeviceData->SleepTime);
     }
     WinUsb_Free(DeviceData->WinusbHandle);
     CloseHandle(DeviceData->DeviceHandle);
