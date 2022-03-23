@@ -103,8 +103,8 @@ BOOL CGHLPokeMachineDlg::OnInitDialog()
 
 	
 									
-
-	// TODO: ajoutez ici une initialisation supplémentaire
+/*
+	// TODO: Modifiier pour minimization
 	// Declare NOTIFYICONDATA details. 
 	// 
 	// Error handling is omitted here for brevity. Do not omit it in your code.
@@ -129,7 +129,7 @@ BOOL CGHLPokeMachineDlg::OnInitDialog()
 
 	// Show the notification.
 	Shell_NotifyIcon(NIM_ADD, &nid) ? S_OK : E_FAIL;
-
+	*/
 
 	return TRUE;  // retourne TRUE, sauf si vous avez défini le focus sur un contrôle
 }

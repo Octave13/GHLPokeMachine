@@ -109,7 +109,8 @@ HRESULT StartGHPoke(_Out_opt_ PBOOL  FailureDeviceNotFound, DWORD   dwThreadIdAr
             return hr;
         }
 
-        if (wcsstr(detailData->DevicePath, L"vid_12ba&pid_074b"))
+        /* PS3 & WIIU*/
+        if (wcsstr(detailData->DevicePath, PS3_WIIU_VID_PID))
         {
             pDeviceData[j] = (PDEVICE_DATA)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DEVICE_DATA));
             if (pDeviceData == NULL)
@@ -140,7 +141,8 @@ HRESULT StartGHPoke(_Out_opt_ PBOOL  FailureDeviceNotFound, DWORD   dwThreadIdAr
             j++;
 
         }
-        else if (wcsstr(detailData->DevicePath, L"vid_1430&pid_07bb"))
+        /* PS4*/
+        else if (wcsstr(detailData->DevicePath, PS4_VID_PID))
         {
             pDeviceData[j] = (PDEVICE_DATA)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DEVICE_DATA));
             if(pDeviceData == NULL)
@@ -150,8 +152,8 @@ HRESULT StartGHPoke(_Out_opt_ PBOOL  FailureDeviceNotFound, DWORD   dwThreadIdAr
                 SetupDiDestroyDeviceInfoList(deviceInfo);
                 return hr;
             }
-
             StringCbCopy(pDeviceData[j]->DevicePath, MAX_PATH - 1, detailData->DevicePath);
+
             hThreadArray[j] = CreateThread(
                 NULL,                   // default security attributes
                 0,                      // use default stack size  
@@ -192,7 +194,7 @@ DWORD WINAPI PS3WiiUPoke(LPVOID lpParam)
     HRESULT hr = S_OK;
     PDEVICE_DATA DeviceData = (PDEVICE_DATA)lpParam;
     BOOL    bResult;
-    CHAR Buffer[BUFSIZE];
+    CHAR Buffer[BUFSIZE] = PS3_WIIU_POKE_MESSAGE;
 
     DeviceData->DeviceHandle = CreateFile(DeviceData->DevicePath, GENERIC_WRITE | GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
 
@@ -201,16 +203,6 @@ DWORD WINAPI PS3WiiUPoke(LPVOID lpParam)
         hr = HRESULT_FROM_WIN32(GetLastError());
         return hr;
     }
-
-    Buffer[0] = 0x02;//a cause des conventions GAB!
-    Buffer[1] = 0x02;
-    Buffer[2] = 0x08;
-    Buffer[3] = 0x20;
-    Buffer[4] = 0x00;
-    Buffer[5] = 0x00;
-    Buffer[6] = 0x00;
-    Buffer[7] = 0x00;
-    Buffer[8] = 0x00;
 
     while (Continue)
     {
@@ -237,7 +229,7 @@ DWORD WINAPI PS4Poke(LPVOID lpParam)
     HRESULT hr = S_OK;
     PDEVICE_DATA DeviceData = (PDEVICE_DATA)lpParam;
     BOOL    bResult;
-    CHAR Buffer[BUFSIZE];
+    CHAR Buffer[POKE_MESSAGE_LENGTH] = PS4_POKE_MESSAGE;
 
     DeviceData->DeviceHandle = CreateFile(DeviceData->DevicePath, GENERIC_WRITE | GENERIC_READ, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
 
@@ -247,19 +239,9 @@ DWORD WINAPI PS4Poke(LPVOID lpParam)
         return hr;
     }
 
-    Buffer[0] = 0x30;//Les conventions GAB?
-    Buffer[1] = 0x02;
-    Buffer[2] = 0x08;
-    Buffer[3] = 0x0A;
-    Buffer[4] = 0x00;
-    Buffer[5] = 0x00;
-    Buffer[6] = 0x00;
-    Buffer[7] = 0x00;
-    Buffer[8] = 0x00;
-
     while (Continue)
     {
-        bResult = HidD_SetOutputReport(DeviceData->DeviceHandle, Buffer, BUFSIZE * sizeof(CHAR));
+        bResult = HidD_SetOutputReport(DeviceData->DeviceHandle, Buffer, POKE_MESSAGE_LENGTH * sizeof(CHAR));
         if (!bResult)
         {
             hr = HRESULT_FROM_WIN32(GetLastError());
