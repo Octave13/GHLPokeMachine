@@ -52,4 +52,4 @@ typedef struct _DEVICE_DATA
 
 HRESULT StartGHPoke(_Out_opt_ PBOOL  FailureDeviceNotFound, DWORD   dwThreadIdArray[], HANDLE  hThreadArray[], PDEVICE_DATA pDeviceData[]);
 
-HRESULT StopGHPoke(HANDLE  hThreadArray[], PDEVICE_DATA pDeviceData[]);
+HRESULT StopGHPoke(DWORD   dwThreadIdArray[], HANDLE  hThreadArray[], PDEVICE_DATA pDeviceData[]);

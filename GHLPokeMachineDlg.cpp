@@ -197,21 +197,36 @@ HCURSOR CGHLPokeMachineDlg::OnQueryDragIcon()
 
 
 BOOL FailureDeviceNotFound;
-DWORD   dwThreadIdArray[4];
-HANDLE  hThreadArray[4];
-PDEVICE_DATA pDeviceData[4];
+PDWORD   dwThreadIdArray;
+PHANDLE  hThreadArray;
+PDEVICE_DATA *pDeviceData;
 
 
 void CGHLPokeMachineDlg::OnBnClickedStart()
 {
+	StopGHPoke(dwThreadIdArray, hThreadArray, pDeviceData);
+	if (hThreadArray == NULL)
+	{
+		pDeviceData = (PDEVICE_DATA*)malloc(sizeof(PDEVICE_DATA));
+	}
 	
+	if (hThreadArray == NULL)
+	{
+		hThreadArray = (PHANDLE)malloc(sizeof(HANDLE));
+	}
+	
+	if (dwThreadIdArray == NULL)
+	{
+		dwThreadIdArray = (PDWORD)malloc(sizeof(DWORD));
+	}
+
 	StartGHPoke(&FailureDeviceNotFound, dwThreadIdArray, hThreadArray, pDeviceData);
 }
 
 
 void CGHLPokeMachineDlg::OnBnClickedCancel()
 {
-	StopGHPoke(hThreadArray, pDeviceData);
+	StopGHPoke(dwThreadIdArray, hThreadArray, pDeviceData);
 
 	CDialogEx::OnCancel();
 }
