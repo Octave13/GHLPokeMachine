@@ -204,8 +204,48 @@ PDEVICE_DATA pDeviceData;
 
 void CGHLPokeMachineDlg::OnBnClickedStart()
 {
-	StartGHPoke(&FailureDeviceNotFound, &dwThreadIdArray, &hThreadArray, &pDeviceData);
+	int NbRemote = 0;
+
+	StartGHPoke(&FailureDeviceNotFound, &dwThreadIdArray, &hThreadArray, &pDeviceData, &NbRemote);
 	
+	if ( NbRemote > 0 )
+	{
+		CWnd* Text1 = GetDlgItem(IDC_STATIC);
+		if (Text1)
+		{
+			Text1->SetWindowTextW((pDeviceData)[0].DevicePath);
+		}
+		
+	}
+
+	if ( NbRemote > 1 )
+	{
+		CWnd* Text2 = GetDlgItem(IDC_STATIC2);
+		if (Text2)
+		{
+			Text2->SetWindowTextW((pDeviceData)[1].DevicePath);
+		}
+
+	}
+	if ( NbRemote > 2 )
+	{
+		CWnd* Text3 = GetDlgItem(IDC_STATIC3);
+		if (Text3)
+		{
+			Text3->SetWindowTextW((pDeviceData)[2].DevicePath);
+		}
+
+	}
+	if ( NbRemote > 3 )
+	{
+		CWnd* Text4 = GetDlgItem(IDC_STATIC4);
+		if (Text4)
+		{
+			Text4->SetWindowTextW((pDeviceData)[3].DevicePath);
+		}
+
+	}
+
 	/* Desactiver le bouton Start*/
 	CWnd* StartBtn = GetDlgItem(IDSTART);
 	if (StartBtn) {

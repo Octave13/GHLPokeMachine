@@ -21,7 +21,7 @@ DWORD WINAPI SendPokeMessage(LPVOID lpParam);
 
 /********************************** Function *******************************************************/
 
-HRESULT StartGHPoke(_Out_opt_ PBOOL  FailureDeviceNotFound, PDWORD   *dwThreadIdArray, PHANDLE  *hThreadArray, PDEVICE_DATA *pDeviceData)
+HRESULT StartGHPoke(_Out_opt_ PBOOL  FailureDeviceNotFound, PDWORD   *dwThreadIdArray, PHANDLE  *hThreadArray, PDEVICE_DATA *pDeviceData, int *pNbRemote)
 {
 
     BOOL                             bResult = FALSE;
@@ -81,6 +81,7 @@ HRESULT StartGHPoke(_Out_opt_ PBOOL  FailureDeviceNotFound, PDWORD   *dwThreadId
                             ExitProcess(3);
                         }
                     }
+                    *pNbRemote = j;
                 }
             }
             hr = HRESULT_FROM_WIN32(GetLastError());
