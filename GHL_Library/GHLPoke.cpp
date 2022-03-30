@@ -21,7 +21,7 @@ DWORD WINAPI SendPokeMessage(LPVOID lpParam);
 
 /********************************** Function *******************************************************/
 
-HRESULT StartGHPoke(_Out_opt_ PBOOL  FailureDeviceNotFound, DWORD   dwThreadIdArray[], HANDLE  hThreadArray[], PDEVICE_DATA pDeviceData[])
+HRESULT StartGHPoke(_Out_opt_ PBOOL  FailureDeviceNotFound, PDWORD   *dwThreadIdArray, PHANDLE  *hThreadArray, PDEVICE_DATA *pDeviceData)
 {
 
     BOOL                             bResult = FALSE;
@@ -62,6 +62,25 @@ HRESULT StartGHPoke(_Out_opt_ PBOOL  FailureDeviceNotFound, DWORD   dwThreadIdAr
                 if (j == 0)
                 {
                     *FailureDeviceNotFound = TRUE;
+                }
+                else
+                {
+                    for (int i = 0; i < j; i++)
+                    {
+                        (*hThreadArray)[i] = CreateThread(
+                            NULL,                   // default security attributes
+                            0,                      // use default stack size  
+                            SendPokeMessage,        // thread function name
+                            &(*pDeviceData)[i],     // argument to thread function 
+                            0,                      // use default creation flags 
+                            &(*dwThreadIdArray)[i]);   // returns the thread identifier 
+                        if ((*hThreadArray)[i] == NULL)
+                        {
+                            LocalFree(detailData);
+                            SetupDiDestroyDeviceInfoList(deviceInfo);
+                            ExitProcess(3);
+                        }
+                    }
                 }
             }
             hr = HRESULT_FROM_WIN32(GetLastError());
@@ -104,66 +123,42 @@ HRESULT StartGHPoke(_Out_opt_ PBOOL  FailureDeviceNotFound, DWORD   dwThreadIdAr
         if (Device = CheckVidPid(detailData->DevicePath))
         {
             /* Memory Allocation for data Pointer */
-            if (j == 0)
+            *pDeviceData = (PDEVICE_DATA)realloc(*pDeviceData, (j + 1) * sizeof(DEVICE_DATA));
+            if (*pDeviceData == NULL)
             {
-
+                hr = HRESULT_FROM_WIN32(GetLastError());
+                LocalFree(detailData);
+                SetupDiDestroyDeviceInfoList(deviceInfo);
+                return hr;
             }
-            else
-            {
-                //realloc(pDeviceData, (j + 1) * sizeof(DEVICE_DATA));
-            }
-
-            /* Memory Allocation for Data */
-
-            pDeviceData[j] = (PDEVICE_DATA)malloc(sizeof(DEVICE_DATA) );
-
 
             /* Initialize Data */
-            if (InitializeData(pDeviceData[j], detailData->DevicePath, Device))
+            if (InitializeData(&(*pDeviceData)[j], detailData->DevicePath, Device))
             {
 
                 /* Memory Allocation for data Pointer */
-                if (j == 0)
-                {
-
-                    //hThreadArray = (PHANDLE)malloc(sizeof(HANDLE));
-                }
-                else
-                {
-
-                    hThreadArray = (PHANDLE)realloc(hThreadArray, (j + 1) * sizeof(HANDLE));
-                }
+                 *hThreadArray = (PHANDLE)realloc(*hThreadArray, (j + 1) * sizeof(HANDLE));
+                 if (*hThreadArray == NULL)
+                 {
+                     hr = HRESULT_FROM_WIN32(GetLastError());
+                     LocalFree(detailData);
+                     SetupDiDestroyDeviceInfoList(deviceInfo);
+                     return hr;
+                 }
 
                 /* Memory Allocation for data Pointer */
-                if (j == 0)
+                *dwThreadIdArray = (PDWORD)realloc(*dwThreadIdArray, (j + 1) * sizeof(DWORD));
+                if (*dwThreadIdArray == NULL)
                 {
-
-                    //dwThreadIdArray = (PDWORD)malloc(sizeof(DWORD));
-                }
-                else
-                {
-
-                    dwThreadIdArray = (PDWORD)realloc(dwThreadIdArray, (j + 1) * sizeof(DWORD));
-                }
-
-                hThreadArray[j] = CreateThread(
-                    NULL,                   // default security attributes
-                    0,                      // use default stack size  
-                    SendPokeMessage,        // thread function name
-                    pDeviceData[j],         // argument to thread function 
-                    0,                      // use default creation flags 
-                    &dwThreadIdArray[j]);   // returns the thread identifier 
-                if (hThreadArray[j] == NULL)
-                {
+                    hr = HRESULT_FROM_WIN32(GetLastError());
                     LocalFree(detailData);
                     SetupDiDestroyDeviceInfoList(deviceInfo);
-                    ExitProcess(3);
+                    return hr;
                 }
                 j++;
             }
 
         }
-
         /* Increment Device Interface Index*/
         i++;
     }
@@ -226,7 +221,6 @@ BOOL InitializeData(PDEVICE_DATA pDeviceData, WCHAR* DevicePath, DeviceType Devi
     {
 
         CloseHandle(pDeviceData->DeviceHandle);
-        //WinUsb_Free(pDeviceData->WinusbHandle);
         pDeviceData->HandlesOpen = FALSE;
         pDeviceData = NULL;
         return FALSE;
@@ -258,45 +252,33 @@ DWORD WINAPI SendPokeMessage(LPVOID lpParam)
         Sleep(DeviceData->SleepTime);
     }
 
-    CloseHandle(DeviceData->DeviceHandle);
-    DeviceData->HandlesOpen = FALSE;
-    //free(DeviceData);
-    //DeviceData = NULL;
     return hr;
 }
 
 
-HRESULT StopGHPoke(DWORD   dwThreadIdArray[], HANDLE  hThreadArray[], PDEVICE_DATA pDeviceData[] )
+HRESULT StopGHPoke(PDWORD   *dwThreadIdArray, PHANDLE  *hThreadArray, PDEVICE_DATA *pDeviceData )
 {
     Continue = FALSE;
 
-    WaitForMultipleObjects(j, hThreadArray, TRUE, INFINITE);
+    WaitForMultipleObjects(j, *hThreadArray, TRUE, INFINITE);
 
-    for (int i = j-1;  0 <= i; i--)
+
+    if (*dwThreadIdArray != NULL)
     {
-        CloseHandle(hThreadArray);
-        //free(pDeviceData[i]);
+        free(*dwThreadIdArray);
+        *dwThreadIdArray = NULL;
     }
-   
-    if (dwThreadIdArray != NULL)
+    if (*hThreadArray != NULL)
     {
-        free(dwThreadIdArray);
-        dwThreadIdArray = NULL;
+        free(*hThreadArray);
+        *hThreadArray = NULL;
     }
-    if (hThreadArray != NULL)
+  
+    if (*pDeviceData != NULL)
     {
-        free(hThreadArray);
-        hThreadArray = NULL;
+        free(*pDeviceData);
+        *pDeviceData = NULL;
     }
-    /*
-    if (pDeviceData != NULL)
-    {
-        free(pDeviceData);
-        pDeviceData = NULL;
-    }
-    */
-    Continue = TRUE;
-    j = 0;
 
     return 0;
 }

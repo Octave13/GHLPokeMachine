@@ -199,35 +199,24 @@ HCURSOR CGHLPokeMachineDlg::OnQueryDragIcon()
 BOOL FailureDeviceNotFound;
 PDWORD   dwThreadIdArray;
 PHANDLE  hThreadArray;
-PDEVICE_DATA *pDeviceData;
+PDEVICE_DATA pDeviceData;
 
 
 void CGHLPokeMachineDlg::OnBnClickedStart()
 {
-	StopGHPoke(dwThreadIdArray, hThreadArray, pDeviceData);
-	if (hThreadArray == NULL)
-	{
-		pDeviceData = (PDEVICE_DATA*)malloc(sizeof(PDEVICE_DATA));
-	}
+	StartGHPoke(&FailureDeviceNotFound, &dwThreadIdArray, &hThreadArray, &pDeviceData);
 	
-	if (hThreadArray == NULL)
-	{
-		hThreadArray = (PHANDLE)malloc(sizeof(HANDLE));
+	/* Desactiver le bouton Start*/
+	CWnd* StartBtn = GetDlgItem(IDSTART);
+	if (StartBtn) {
+		StartBtn->EnableWindow(FALSE);
 	}
-	
-	if (dwThreadIdArray == NULL)
-	{
-		dwThreadIdArray = (PDWORD)malloc(sizeof(DWORD));
-	}
-
-	StartGHPoke(&FailureDeviceNotFound, dwThreadIdArray, hThreadArray, pDeviceData);
 }
 
 
 void CGHLPokeMachineDlg::OnBnClickedCancel()
 {
-	StopGHPoke(dwThreadIdArray, hThreadArray, pDeviceData);
+	StopGHPoke(&dwThreadIdArray, &hThreadArray, &pDeviceData);
 
 	CDialogEx::OnCancel();
 }
-
