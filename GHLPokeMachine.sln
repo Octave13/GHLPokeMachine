@@ -9,14 +9,23 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
+		Release_x64|x64 = Release_x64|x64
+		Release_x64|x86 = Release_x64|x86
+		Release_x86|x64 = Release_x86|x64
+		Release_x86|x86 = Release_x86|x86
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{B442FCDC-F930-4EED-B48F-B6D20C53255D}.Debug|x64.ActiveCfg = Debug|x64
-		{B442FCDC-F930-4EED-B48F-B6D20C53255D}.Debug|x64.Build.0 = Debug|x64
 		{B442FCDC-F930-4EED-B48F-B6D20C53255D}.Debug|x86.ActiveCfg = Debug|Win32
 		{B442FCDC-F930-4EED-B48F-B6D20C53255D}.Debug|x86.Build.0 = Debug|Win32
+		{B442FCDC-F930-4EED-B48F-B6D20C53255D}.Release_x64|x64.ActiveCfg = Release_x64|x64
+		{B442FCDC-F930-4EED-B48F-B6D20C53255D}.Release_x64|x64.Build.0 = Release_x64|x64
+		{B442FCDC-F930-4EED-B48F-B6D20C53255D}.Release_x64|x86.ActiveCfg = Release_x64|Win32
+		{B442FCDC-F930-4EED-B48F-B6D20C53255D}.Release_x86|x64.ActiveCfg = Release_x86|x64
+		{B442FCDC-F930-4EED-B48F-B6D20C53255D}.Release_x86|x86.ActiveCfg = Release_x86|Win32
+		{B442FCDC-F930-4EED-B48F-B6D20C53255D}.Release_x86|x86.Build.0 = Release_x86|Win32
 		{B442FCDC-F930-4EED-B48F-B6D20C53255D}.Release|x64.ActiveCfg = Release|x64
 		{B442FCDC-F930-4EED-B48F-B6D20C53255D}.Release|x64.Build.0 = Release|x64
 		{B442FCDC-F930-4EED-B48F-B6D20C53255D}.Release|x86.ActiveCfg = Release|Win32

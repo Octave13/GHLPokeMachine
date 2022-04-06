@@ -5,10 +5,11 @@
 
 
 /**************************************** global variable ******************************************/
-BOOL Continue = TRUE;
+BOOL Continue = FALSE;
 int j = 0;
 const CHAR Ps3WiiuPokeMessage[POKE_MESSAGE_LENGTH] = PS3_WIIU_POKE_MESSAGE;
 const CHAR Ps4PokeMessage[POKE_MESSAGE_LENGTH] = PS4_POKE_MESSAGE;
+CHAR XboxOnePokeMessage[POKE_MESSAGE_LENGTH] = XBOXONE_POKE_MESSAGE;
 
 /************************************* private function prototype***********************************/
 
@@ -18,6 +19,8 @@ DeviceType CheckVidPid(WCHAR* DevicePath);
 BOOL InitializeData(PDEVICE_DATA pDeviceData, WCHAR* DevicePath, DeviceType Device);
 
 DWORD WINAPI SendPokeMessage(LPVOID lpParam);
+
+LPCTSTR GetDeviceString(PDEVICE_DATA DeviceData);
 
 /********************************** Function *******************************************************/
 
@@ -41,7 +44,7 @@ HRESULT StartGHPoke(_Out_opt_ PBOOL  FailureDeviceNotFound, PDWORD   *dwThreadId
     }
 
     // Enumerate all devices exposing the HID interface
-    deviceInfo = SetupDiGetClassDevs(&GUID_DEVINTERFACE_HID, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+    deviceInfo = SetupDiGetClassDevs(&GUID_DEVINTERFACE_HID, NULL, NULL, DIGCF_PRESENT  | DIGCF_DEVICEINTERFACE);
     if (deviceInfo == INVALID_HANDLE_VALUE) 
     {
         hr = HRESULT_FROM_WIN32(GetLastError());
@@ -49,6 +52,7 @@ HRESULT StartGHPoke(_Out_opt_ PBOOL  FailureDeviceNotFound, PDWORD   *dwThreadId
     }
     interfaceData.cbSize = sizeof(SP_DEVICE_INTERFACE_DATA);
 
+    Continue = TRUE;
 
     while (Continue)
     {
@@ -56,6 +60,8 @@ HRESULT StartGHPoke(_Out_opt_ PBOOL  FailureDeviceNotFound, PDWORD   *dwThreadId
         bResult = SetupDiEnumDeviceInterfaces(deviceInfo, NULL, &GUID_DEVINTERFACE_HID, i, &interfaceData);
         if (FALSE == bResult)
         {
+            Continue = FALSE;
+
             // We would see this error if no devices were found
             if (ERROR_NO_MORE_ITEMS == GetLastError() && NULL != FailureDeviceNotFound)
             {
@@ -81,6 +87,7 @@ HRESULT StartGHPoke(_Out_opt_ PBOOL  FailureDeviceNotFound, PDWORD   *dwThreadId
                             ExitProcess(3);
                         }
                     }
+                    *FailureDeviceNotFound = FALSE;
                     *pNbRemote = j;
                 }
             }
@@ -174,8 +181,10 @@ DeviceType CheckVidPid(WCHAR *DevicePath)
 {
     if (wcsstr(DevicePath, PS4_VID_PID))
         return PS4;
-    else if(wcsstr(DevicePath, PS3_WIIU_VID_PID))
+    else if (wcsstr(DevicePath, PS3_WIIU_VID_PID))
         return PS3_WIIU;
+    else if (wcsstr(DevicePath, XBOXONE_VID_PID))
+        return XBOXONE;
     else
         /* Not a recognized Device*/
         return UNKNOWN_DEVICE;
@@ -204,7 +213,7 @@ BOOL InitializeData(PDEVICE_DATA pDeviceData, WCHAR* DevicePath, DeviceType Devi
     /* Initialize Specific Device Data */
     switch (Device)
     {
-    case PS4: 
+    case PS4:
         memcpy_s(pDeviceData->PokeMessage, POKE_MESSAGE_LENGTH, Ps4PokeMessage, POKE_MESSAGE_LENGTH);
         pDeviceData->SleepTime = PS4_SLEEP_TIME;
         break;
@@ -212,15 +221,18 @@ BOOL InitializeData(PDEVICE_DATA pDeviceData, WCHAR* DevicePath, DeviceType Devi
         memcpy_s(pDeviceData->PokeMessage, POKE_MESSAGE_LENGTH, Ps3WiiuPokeMessage, POKE_MESSAGE_LENGTH);
         pDeviceData->SleepTime = PS3_WIIU_SLEEP_TIME;
         break;
-    default: 
+    case XBOXONE:
+        memcpy_s(pDeviceData->PokeMessage, POKE_MESSAGE_LENGTH, XboxOnePokeMessage, POKE_MESSAGE_LENGTH);
+        pDeviceData->SleepTime = XBOXONE_SLEEP_TIME;
+        break;
+    default:
         /* Not supported */
         break;
-    }
+    };
 
     /* Send a first Poke. Some device have more than one interface */
     if (!HidD_SetOutputReport(pDeviceData->DeviceHandle, pDeviceData->PokeMessage, POKE_MESSAGE_LENGTH * sizeof(CHAR)))
     {
-
         CloseHandle(pDeviceData->DeviceHandle);
         pDeviceData->HandlesOpen = FALSE;
         pDeviceData = NULL;
@@ -228,7 +240,6 @@ BOOL InitializeData(PDEVICE_DATA pDeviceData, WCHAR* DevicePath, DeviceType Devi
     }
 
     return TRUE;
-
 }
 
 DWORD WINAPI SendPokeMessage(LPVOID lpParam)
@@ -237,6 +248,9 @@ DWORD WINAPI SendPokeMessage(LPVOID lpParam)
     PDEVICE_DATA DeviceData = (PDEVICE_DATA)lpParam;
     BOOL    bResult;
 
+    while (!Continue);
+    SetStaticText(DeviceData->DlgItem, GetDeviceString(DeviceData));
+
     while (Continue)
     {
         /* Send Poke */
@@ -244,25 +258,27 @@ DWORD WINAPI SendPokeMessage(LPVOID lpParam)
         if (!bResult)
         {
             /* If error eg: Deconnexion */
-            hr = HRESULT_FROM_WIN32(GetLastError());
+            hr = GetLastError();
+            SetStaticText(DeviceData->DlgItem, L"Connexion Problem");
             CloseHandle(DeviceData->DeviceHandle);
             DeviceData->HandlesOpen = FALSE;
             return hr;
         }
+
         /* Wait for next poke */
         Sleep(DeviceData->SleepTime);
     }
-
+    CloseHandle(DeviceData->DeviceHandle);
+    DeviceData->HandlesOpen = FALSE;
     return hr;
 }
 
 
 HRESULT StopGHPoke(PDWORD   *dwThreadIdArray, PHANDLE  *hThreadArray, PDEVICE_DATA *pDeviceData )
 {
-    Continue = FALSE;
+    SetContinueThread( FALSE );
 
     WaitForMultipleObjects(j, *hThreadArray, TRUE, INFINITE);
-
 
     if (*dwThreadIdArray != NULL)
     {
@@ -281,5 +297,64 @@ HRESULT StopGHPoke(PDWORD   *dwThreadIdArray, PHANDLE  *hThreadArray, PDEVICE_DA
         *pDeviceData = NULL;
     }
 
+    j = 0;
+
     return 0;
+}
+
+#define IDC_STATIC2 1006
+#define IDC_STATIC3 1007
+#define IDC_STATIC4 1008
+
+int GetItemNb(int i)
+{
+    switch (i)
+    {
+        case 0:
+            return IDC_STATIC;
+        case 1:
+            return IDC_STATIC2;
+        case 2:
+            return IDC_STATIC3;
+        case 3:
+            return IDC_STATIC4;
+        default:
+            return IDC_STATIC;
+        
+    }
+}
+
+LPCTSTR GetDeviceString(PDEVICE_DATA DeviceData)
+{
+    if (wcsstr(DeviceData->DevicePath, PS4_VID_PID))
+        return L"PS4 Guitar";
+    else if (wcsstr(DeviceData->DevicePath, PS3_WIIU_VID_PID))
+        return L"PS3/WIIU Guitar";
+    else if (wcsstr(DeviceData->DevicePath, XBOXONE_VID_PID))
+        return L"XBOX One Guitar";
+    else
+        /* Not a recognized Device*/
+        return L"Unknown Device";
+}
+
+BOOL SetStaticText(CWnd* Text, LPCTSTR lpszString)
+{
+    if (Text != NULL)
+    {
+        Text->SetWindowTextW(lpszString);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+VOID SetContinueThread(BOOL Bool)
+{
+    if (Bool)
+    {
+        Continue = TRUE;
+    }
+    else
+    {
+        Continue = FALSE;
+    }
 }
