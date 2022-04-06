@@ -214,6 +214,7 @@ void CGHLPokeMachineDlg::OnBnClickedStart()
 	switch(Status)
 	{
 	case STOPPED :
+		
 		StartGHPoke(&FailureDeviceNotFound, &dwThreadIdArray, &hThreadArray, &pDeviceData, &NbRemote);
 
 		if ( NbRemote == 0 )
@@ -229,7 +230,7 @@ void CGHLPokeMachineDlg::OnBnClickedStart()
 				pDeviceData[i].DlgItem = GetDlgItem(ItemNb);
 			}
 			Status = RUNNING;
-			SetContinueThread(TRUE);
+			SetStartThread(TRUE);
 
 			Text = GetDlgItem(IDSTART);
 			if (Text) 

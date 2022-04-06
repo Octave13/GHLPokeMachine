@@ -64,4 +64,4 @@ BOOL SetStaticText(CWnd* Text, LPCTSTR lpszString);
 
 int GetItemNb(int i);
 
-VOID SetContinueThread(BOOL Bool);
+VOID SetStartThread(BOOL Bool);
