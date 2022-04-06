@@ -5,7 +5,8 @@
 
 
 /**************************************** global variable ******************************************/
-BOOL Continue = FALSE;
+BOOL Start = FALSE;
+BOOL Continue = TRUE;
 int j = 0;
 const CHAR Ps3WiiuPokeMessage[POKE_MESSAGE_LENGTH] = PS3_WIIU_POKE_MESSAGE;
 const CHAR Ps4PokeMessage[POKE_MESSAGE_LENGTH] = PS4_POKE_MESSAGE;
@@ -52,16 +53,12 @@ HRESULT StartGHPoke(_Out_opt_ PBOOL  FailureDeviceNotFound, PDWORD   *dwThreadId
     }
     interfaceData.cbSize = sizeof(SP_DEVICE_INTERFACE_DATA);
 
-    Continue = TRUE;
-
     while (Continue)
     {
         // Get the next interface (index i) in the result set
         bResult = SetupDiEnumDeviceInterfaces(deviceInfo, NULL, &GUID_DEVINTERFACE_HID, i, &interfaceData);
         if (FALSE == bResult)
         {
-            Continue = FALSE;
-
             // We would see this error if no devices were found
             if (ERROR_NO_MORE_ITEMS == GetLastError() && NULL != FailureDeviceNotFound)
             {
@@ -247,8 +244,13 @@ DWORD WINAPI SendPokeMessage(LPVOID lpParam)
     HRESULT hr = S_OK;
     PDEVICE_DATA DeviceData = (PDEVICE_DATA)lpParam;
     BOOL    bResult;
+    int i = 0;
 
-    while (!Continue);
+    while ( !Start || !Continue)
+    {
+        Sleep(ONE_SECOND);
+    }
+
     SetStaticText(DeviceData->DlgItem, GetDeviceString(DeviceData));
 
     while (Continue)
@@ -276,7 +278,7 @@ DWORD WINAPI SendPokeMessage(LPVOID lpParam)
 
 HRESULT StopGHPoke(PDWORD   *dwThreadIdArray, PHANDLE  *hThreadArray, PDEVICE_DATA *pDeviceData )
 {
-    SetContinueThread( FALSE );
+    Continue =  FALSE;
 
     WaitForMultipleObjects(j, *hThreadArray, TRUE, INFINITE);
 
@@ -296,6 +298,9 @@ HRESULT StopGHPoke(PDWORD   *dwThreadIdArray, PHANDLE  *hThreadArray, PDEVICE_DA
         free(*pDeviceData);
         *pDeviceData = NULL;
     }
+
+    SetStartThread(FALSE);
+    Continue = TRUE;
 
     j = 0;
 
@@ -347,14 +352,14 @@ BOOL SetStaticText(CWnd* Text, LPCTSTR lpszString)
     return FALSE;
 }
 
-VOID SetContinueThread(BOOL Bool)
+VOID SetStartThread(BOOL Bool)
 {
     if (Bool)
     {
-        Continue = TRUE;
+        Start = TRUE;
     }
     else
     {
-        Continue = FALSE;
+        Start = FALSE;
     }
 }
