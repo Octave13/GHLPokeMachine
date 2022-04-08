@@ -254,6 +254,11 @@ DWORD WINAPI SendPokeMessage(LPVOID lpParam)
         {
             /* If error eg: Deconnexion */
             hr = GetLastError();
+            
+            MessageBox(NULL, (LPCWSTR)L"One device was disconnected\nCheck the connection, press stop and then start",
+                (LPCWSTR)GetDeviceString(DeviceData),
+                MB_ICONEXCLAMATION | MB_OK | MB_DEFBUTTON1
+            );
             SetStaticText(DeviceData->DlgItem, L"Connexion Problem");
             CloseHandle(DeviceData->DeviceHandle);
             DeviceData->HandlesOpen = FALSE;
