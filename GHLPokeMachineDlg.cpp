@@ -250,7 +250,7 @@ void CGHLPokeMachineDlg::OnBnClickedStart()
 			Text = GetDlgItem(IDC_STATIC);
 			SetStaticText(Text, L"No device found");
 
-			MessageBox( (LPCWSTR)L"No device were found\nCheck the connection and try again",
+			MessageBox( (LPCWSTR)L"Make sure your USB dongle is plugged into the computer and try again",
 						(LPCWSTR)L"GHLPokeMachine",
 						MB_ICONEXCLAMATION | MB_OK | MB_DEFBUTTON1
 						);
