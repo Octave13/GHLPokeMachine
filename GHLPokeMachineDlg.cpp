@@ -13,6 +13,16 @@
 #endif
 
 
+enum { STOPPED, RUNNING };
+
+PDWORD   dwThreadIdArray;
+PHANDLE  hThreadArray;
+PDEVICE_DATA pDeviceData;
+int Status = STOPPED;
+
+
+
+
 // boîte de dialogue CAboutDlg utilisée pour la boîte de dialogue 'À propos de' pour votre application
 
 class CAboutDlg : public CDialogEx
@@ -101,8 +111,32 @@ BOOL CGHLPokeMachineDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// Définir une grande icône
 	SetIcon(m_hIcon, FALSE);		// Définir une petite icône
 
-	
-									
+	int NbRemote = 0;
+	BOOL FailureDeviceNotFound;
+	CWnd* Text;
+	int ItemNb;
+	StartGHPoke(&FailureDeviceNotFound, &dwThreadIdArray, &hThreadArray, &pDeviceData, &NbRemote);
+	if (NbRemote == 0)
+	{
+		Text = GetDlgItem(IDC_STATIC);
+		SetStaticText(Text, L"No device found");
+	}
+	else
+	{
+		for (int i = 0; i < NbRemote; i++)
+		{
+			ItemNb = GetItemNb(i);
+			pDeviceData[i].DlgItem = GetDlgItem(ItemNb);
+		}
+		Status = RUNNING;
+		SetStartThread(TRUE);
+
+		Text = GetDlgItem(IDSTART);
+		if (Text)
+		{
+			Text->SetWindowTextW(L"Stop");
+		}
+	}
 /*
 	// TODO: Modifiier pour minimization
 	// Declare NOTIFYICONDATA details. 
@@ -197,15 +231,9 @@ HCURSOR CGHLPokeMachineDlg::OnQueryDragIcon()
 
 
 
-PDWORD   dwThreadIdArray;
-PHANDLE  hThreadArray;
-PDEVICE_DATA pDeviceData;
-
-enum{ STOPPED, RUNNING };
 
 void CGHLPokeMachineDlg::OnBnClickedStart()
 {
-	static int Status = STOPPED;
 	int NbRemote = 0;
 	BOOL FailureDeviceNotFound;
 	int ItemNb;
@@ -221,6 +249,11 @@ void CGHLPokeMachineDlg::OnBnClickedStart()
 		{
 			Text = GetDlgItem(IDC_STATIC);
 			SetStaticText(Text, L"No device found");
+
+			MessageBox( (LPCWSTR)L"Make sure your USB dongle is plugged into the computer and try again",
+						(LPCWSTR)L"GHLPokeMachine",
+						MB_ICONEXCLAMATION | MB_OK | MB_DEFBUTTON1
+						);
 		}
 		else
 		{
@@ -259,60 +292,6 @@ void CGHLPokeMachineDlg::OnBnClickedStart()
 		break;
 	}
 
-
-	/*
-	
-	if ( NbRemote > 0 )
-	{
-		CWnd* Text1 = GetDlgItem(IDC_STATIC);
-		if (Text1)
-		{
-			//Text1->SetWindowTextW((pDeviceData)[0].DevicePath);
-			Text1->SetWindowTextW(L"Remote 1 connected");
-		}
-		
-	}
-
-	if ( NbRemote > 1 )
-	{
-		CWnd* Text2 = GetDlgItem(IDC_STATIC2);
-		if (Text2)
-		{
-			//Text2->SetWindowTextW((pDeviceData)[1].DevicePath);
-			Text2->SetWindowTextW(L"Remote 2 connected");
-		}
-
-	}
-	if ( NbRemote > 2 )
-	{
-		CWnd* Text3 = GetDlgItem(IDC_STATIC3);
-		if (Text3)
-		{
-			//Text3->SetWindowTextW((pDeviceData)[2].DevicePath);
-			Text3->SetWindowTextW(L"Remote 3 connected");
-		}
-
-	}
-	if ( NbRemote > 3 )
-	{
-		CWnd* Text4 = GetDlgItem(IDC_STATIC4);
-		if (Text4)
-		{
-			//Text4->SetWindowTextW((pDeviceData)[3].DevicePath);
-			Text4->SetWindowTextW(L"Remote 4 connected");
-		}
-
-	}
-	*/
-
-
-	/* Desactiver le bouton Start*/
-	/*
-	CWnd* StartBtn = GetDlgItem(IDSTART);
-	if (StartBtn) {
-		StartBtn->EnableWindow(FALSE);
-	}
-	*/
 }
 
 

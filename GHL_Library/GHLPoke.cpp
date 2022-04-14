@@ -10,7 +10,6 @@ BOOL Continue = TRUE;
 int j = 0;
 const CHAR Ps3WiiuPokeMessage[POKE_MESSAGE_LENGTH] = PS3_WIIU_POKE_MESSAGE;
 const CHAR Ps4PokeMessage[POKE_MESSAGE_LENGTH] = PS4_POKE_MESSAGE;
-CHAR XboxOnePokeMessage[POKE_MESSAGE_LENGTH] = XBOXONE_POKE_MESSAGE;
 
 /************************************* private function prototype***********************************/
 
@@ -180,8 +179,6 @@ DeviceType CheckVidPid(WCHAR *DevicePath)
         return PS4;
     else if (wcsstr(DevicePath, PS3_WIIU_VID_PID))
         return PS3_WIIU;
-    else if (wcsstr(DevicePath, XBOXONE_VID_PID))
-        return XBOXONE;
     else
         /* Not a recognized Device*/
         return UNKNOWN_DEVICE;
@@ -217,10 +214,6 @@ BOOL InitializeData(PDEVICE_DATA pDeviceData, WCHAR* DevicePath, DeviceType Devi
     case PS3_WIIU:
         memcpy_s(pDeviceData->PokeMessage, POKE_MESSAGE_LENGTH, Ps3WiiuPokeMessage, POKE_MESSAGE_LENGTH);
         pDeviceData->SleepTime = PS3_WIIU_SLEEP_TIME;
-        break;
-    case XBOXONE:
-        memcpy_s(pDeviceData->PokeMessage, POKE_MESSAGE_LENGTH, XboxOnePokeMessage, POKE_MESSAGE_LENGTH);
-        pDeviceData->SleepTime = XBOXONE_SLEEP_TIME;
         break;
     default:
         /* Not supported */
@@ -261,7 +254,12 @@ DWORD WINAPI SendPokeMessage(LPVOID lpParam)
         {
             /* If error eg: Deconnexion */
             hr = GetLastError();
-            SetStaticText(DeviceData->DlgItem, L"Connexion Problem");
+            
+            MessageBox(NULL, (LPCWSTR)L"One device was disconnected\nMake sure your USB dongle is plugged into the computer, press stop and then start",
+                (LPCWSTR)GetDeviceString(DeviceData),
+                MB_ICONEXCLAMATION | MB_OK | MB_DEFBUTTON1
+            );
+            SetStaticText(DeviceData->DlgItem, L"Connection Problem");
             CloseHandle(DeviceData->DeviceHandle);
             DeviceData->HandlesOpen = FALSE;
             return hr;
@@ -335,8 +333,6 @@ LPCTSTR GetDeviceString(PDEVICE_DATA DeviceData)
         return L"PS4 Guitar";
     else if (wcsstr(DeviceData->DevicePath, PS3_WIIU_VID_PID))
         return L"PS3/WIIU Guitar";
-    else if (wcsstr(DeviceData->DevicePath, XBOXONE_VID_PID))
-        return L"XBOX One Guitar";
     else
         /* Not a recognized Device*/
         return L"Unknown Device";
