@@ -244,6 +244,7 @@ DWORD WINAPI SendPokeMessage(LPVOID lpParam)
         Sleep(ONE_SECOND);
     }
 
+    //Write in the interface which dongle it is
     SetStaticText(DeviceData->DlgItem, GetDeviceString(DeviceData));
 
     while (Continue)
@@ -255,10 +256,12 @@ DWORD WINAPI SendPokeMessage(LPVOID lpParam)
             /* If error eg: Deconnexion */
             hr = GetLastError();
             
+            //Send a message
             MessageBox(NULL, (LPCWSTR)L"One device was disconnected\nMake sure your USB dongle is plugged into the computer, press stop and then start",
                 (LPCWSTR)GetDeviceString(DeviceData),
                 MB_ICONEXCLAMATION | MB_OK | MB_DEFBUTTON1
             );
+            //Write in the interface that there's a connection problem
             SetStaticText(DeviceData->DlgItem, L"Connection Problem");
             CloseHandle(DeviceData->DeviceHandle);
             DeviceData->HandlesOpen = FALSE;
