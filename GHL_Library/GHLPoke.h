@@ -4,7 +4,6 @@
 // Define below GUIDs
 //
 
-
 /*
 #include <initguid.h>
 #include <cfgmgr32.h>
